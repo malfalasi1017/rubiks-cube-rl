@@ -61,82 +61,19 @@ class RubiksCubeEnv(gym.Env):
         self.steps = 0
         self.solved_state = None
 
-    def reset():
+        # Add these lines:
+        self.vis = None
+        self.vis_initialized = False
+
+    def reset(self, seed=None, options=None):
         pass
 
     def step(self, action):
         pass
 
-    def _get_obs(self):
-        pass
-
-    def _get_info(self):
-        pass
-
-    def _is_solved(self):
-        pass
-
-    def _count_correct_squares(self):
-        pass
-
-    def _apply_action(self, action):
-        pass
 
     # Rendering the environment
     def render(self):
-        if self.render_mode is None:
-            return
-        
-        if self.cube is None:
-            return
-        
-        vis = o3d.visualization.Visualizer()
-        vis.create_window(window_name="Rubik's Cube", width=800, height=600)
-
-        cube_meshes = self._create_cube_meshes()
-        for mesh in cube_meshes:
-            vis.add_geometry(mesh)
-
-        # set default camera
-        ctr = vis.get_view_control()
-        ctr.set_zoom(0.8)
-        ctr.set_front([0.5, 0.5, -0.5])
-        ctr.set_up([0, 1, 0])
-        ctr.set_lookat([0, 0, 0])
-
-        # Run the visualizer
-        vis.run()
-        vis.destroy_window()
-
-    def _create_cube_meshes(self):
-        meshes = []
-
-        size = 0.95
-
-        positions = []
-        for x in range(-1, 2):
-            for y in range(-1, 2):
-                for z in range(-1, 2):
-                    positions.append([x, y, z])
-
-        face_colors = [[c[0]/255, c[1]/255, c[2]/255] for c in face_colors]
-
-        for i, pos in enumerate(positions):
-            mesh = o3d.geometry.TriangleMesh.create_box(width=size, height=size, depth=size)
-            mesh.translate([pos[0], pos[1], pos[2]])
-
-            vertex_colors = []
-            for vertex in range(len(mesh.vertices)):
-                vertex_colors.append([0.2, 0.2, 0.2])
-
-            if self.cube is not None:
-                pass
-
-            mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
-            mesh.compute_vertex_normals()
-            meshes.append(mesh)
-
-        return meshes
-
+        pass
 
 
