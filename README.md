@@ -13,32 +13,47 @@ This project implements a Gymnasium environment for training reinforcement learn
 - 3D visualization using Open3D
 - Configurable scrambling complexity
 
-## Installation
+## Installation with UV
 
-1. Ensure you have Python 3.12 installed
-2. Clone this repository
+This guide uses [uv](https://github.com/astral-sh/uv), a fast Python package installer and resolver written in Rust that significantly speeds up dependency management.
+
+### Step-by-Step Setup
+
+1. **Install uv** (if you don't have it already):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+2. **Clone the repository**:
 
 ```bash
 git clone https://github.com/yourusername/rubiks-cube-rl.git
 cd rubiks-cube-rl
 ```
 
-3. Create and activate a virtual environment
+3. **Create and activate a virtual environment with uv**:
 
 ```bash
-python -m venv .venv
+uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-4. Install dependencies
+4. **Install dependencies with uv**:
 
 ```bash
-pip install -e .
+uv pip install -e .
 ```
 
-## Usage
+## Running the Project
 
-Basic usage example:
+1. **Run the main example**:
+
+```bash
+python main.py
+```
+
+2. **Or use the environment in your own code**:
 
 ```python
 import gymnasium as gym
