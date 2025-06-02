@@ -51,18 +51,18 @@ def update_target(online_net, target_net):
 
 def main():
     # Hyperparameters
-    SCRAMBLES = 3
-    MAX_STEPS = 3
-    BUFFER_SIZE = 50_000
-    BATCH_SIZE = 128
-    GAMMA = 0.99
-    LR = 1e-4
+    SCRAMBLES = 5
+    MAX_STEPS = 6
+    BUFFER_SIZE = 100_000
+    BATCH_SIZE = 256
+    GAMMA = 0.995
+    LR = 5e-5
     EPS_START = 1.0
     EPS_END = 0.05
-    EPS_DECAY = 0.9999
-    TARGET_UPDATE_FREQ = 500
-    TRAIN_START = 1_000
-    NUM_EPISODES = 10_000
+    EPS_DECAY = 0.9997
+    TARGET_UPDATE_FREQ = 2_000
+    TRAIN_START = 5_000
+    NUM_EPISODES = 50_000
     MODEL_PATH = "./src/models/dqn_cube.pth"
     RESULTS_PATH = "./src/results/dqn_results.csv"
 
