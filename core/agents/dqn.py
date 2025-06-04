@@ -51,20 +51,20 @@ def update_target(online_net, target_net):
 
 def main():
     # Hyperparameters
-    SCRAMBLES = 5
-    MAX_STEPS = 6
+    SCRAMBLES = 2
+    MAX_STEPS = 3
     BUFFER_SIZE = 100_000
     BATCH_SIZE = 256
     GAMMA = 0.995
-    LR = 5e-5
+    LR = 1e-3
     EPS_START = 1.0
     EPS_END = 0.05
     EPS_DECAY = 0.9997
-    TARGET_UPDATE_FREQ = 2_000
-    TRAIN_START = 5_000
-    NUM_EPISODES = 50_000
-    MODEL_PATH = "./src/models/dqn_cube.pth"
-    RESULTS_PATH = "./src/results/dqn_results.csv"
+    TARGET_UPDATE_FREQ = 1000
+    TRAIN_START = 500
+    NUM_EPISODES = 10_000
+    MODEL_PATH = "./models/dqn_cube.pth"
+    RESULTS_PATH = "./results/dqn_results.csv"
 
     env = RubiksCubeEnv(scrambles=SCRAMBLES, max_steps=MAX_STEPS)
     state_dim = env.observation_space.shape[0]
