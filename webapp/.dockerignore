@@ -1,0 +1,16 @@
+.DS_Store
+node_modules
+.next
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env*.local
+.env.development
+.env.test
+*.env
+# Add any other files or directories you don't want in your image
+# e.g., README.md, .git, .vscode, etc.
+.git
+.gitignore
+*.md
