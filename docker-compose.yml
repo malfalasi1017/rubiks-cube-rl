@@ -6,3 +6,9 @@ services:
     environment:
       - NODE_ENV=production
     restart: unless-stopped
+    depends_on:
+      - solver
+  solver:
+    build: ./solver
+    ports:
+      - "8000:8000"
