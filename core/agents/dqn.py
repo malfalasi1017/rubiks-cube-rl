@@ -12,6 +12,19 @@ import time
 
 from helpers.record_results import save_results_to_csv
 
+# Add device detection function
+def get_device():
+    """Automatically detect and return the best available device"""
+    if torch.cuda.is_available():
+        print("Using CUDA GPU")
+        return torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        print("Using MPS (Apple Silicon)")
+        return torch.device("mps")
+    else:
+        print("Using CPU")
+        return torch.device("cpu")
+
 class DQNNetwork(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(DQNNetwork, self).__init__()
@@ -37,12 +50,12 @@ class ReplayBuffer:
     def size(self):
         return len(self.buffer)
 
-def select_action(state, online_net, epsilon, action_dim):
+def select_action(state, online_net, epsilon, action_dim, device):
     if np.random.rand() < epsilon:
         return np.random.randint(action_dim)
     else:
         with torch.no_grad():
-            state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+            state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device)
             q_values = online_net(state_tensor)
             return torch.argmax(q_values).item()
 
@@ -50,19 +63,22 @@ def update_target(online_net, target_net):
     target_net.load_state_dict(online_net.state_dict())
 
 def main():
-    # Hyperparameters
-    SCRAMBLES = 2
-    MAX_STEPS = 3
-    BUFFER_SIZE = 100_000
-    BATCH_SIZE = 256
-    GAMMA = 0.995
-    LR = 1e-3
+    # Get device
+    device = get_device()
+    
+    # Hyperparameters - REDUCE BATCH SIZE for better GPU utilization
+    SCRAMBLES = 4
+    MAX_STEPS = 4
+    BUFFER_SIZE = 500_000
+    BATCH_SIZE = 64 
+    GAMMA = 0.9995
+    LR = 5e-4
     EPS_START = 1.0
     EPS_END = 0.05
-    EPS_DECAY = 0.9997
+    EPS_DECAY = 0.99995
     TARGET_UPDATE_FREQ = 1000
-    TRAIN_START = 500
-    NUM_EPISODES = 10_000
+    TRAIN_START = 1000
+    NUM_EPISODES = 30_000
     MODEL_PATH = "./models/dqn_cube.pth"
     RESULTS_PATH = "./results/dqn_results.csv"
 
@@ -70,8 +86,9 @@ def main():
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 
-    online_net = DQNNetwork(state_dim, action_dim)
-    target_net = DQNNetwork(state_dim, action_dim)
+    # Move networks to device
+    online_net = DQNNetwork(state_dim, action_dim).to(device)
+    target_net = DQNNetwork(state_dim, action_dim).to(device)
     update_target(online_net, target_net)
     optimizer = optim.Adam(online_net.parameters(), lr=LR)
     replay_buffer = ReplayBuffer(BUFFER_SIZE)
@@ -88,7 +105,7 @@ def main():
         steps = 0
 
         while not done:
-            action = select_action(state, online_net, epsilon, action_dim)
+            action = select_action(state, online_net, epsilon, action_dim, device)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             replay_buffer.store((state, action, reward, next_state, done))
@@ -97,25 +114,32 @@ def main():
             steps += 1
             total_steps += 1
 
-            # Training step
-            if replay_buffer.size() > TRAIN_START:
+            # OPTIMIZED: Train less frequently but with consistent batches
+            if replay_buffer.size() > TRAIN_START and total_steps % 4 == 0:  # Train every 4 steps
                 batch = replay_buffer.sample(BATCH_SIZE)
                 states, actions, rewards, next_states, dones = zip(*batch)
-                states = torch.tensor(states, dtype=torch.float32)
-                actions = torch.tensor(actions, dtype=torch.long).unsqueeze(1)
-                rewards = torch.tensor(rewards, dtype=torch.float32)
-                next_states = torch.tensor(next_states, dtype=torch.float32)
-                dones = torch.tensor(dones, dtype=torch.float32)
+                
+                # Create tensors directly on device (more efficient)
+                states = torch.tensor(np.array(states), dtype=torch.float32, device=device)
+                actions = torch.tensor(actions, dtype=torch.long, device=device).unsqueeze(1)
+                rewards = torch.tensor(rewards, dtype=torch.float32, device=device)
+                next_states = torch.tensor(np.array(next_states), dtype=torch.float32, device=device)
+                dones = torch.tensor(dones, dtype=torch.float32, device=device)
 
                 # Double DQN target calculation
                 q_values = online_net(states).gather(1, actions).squeeze()
-                next_actions = torch.argmax(online_net(next_states), dim=1, keepdim=True)
-                next_q_values = target_net(next_states).gather(1, next_actions).squeeze()
-                targets = rewards + GAMMA * next_q_values * (1 - dones)
+                
+                with torch.no_grad():  # More efficient target calculation
+                    next_actions = torch.argmax(online_net(next_states), dim=1, keepdim=True)
+                    next_q_values = target_net(next_states).gather(1, next_actions).squeeze()
+                    targets = rewards + GAMMA * next_q_values * (1 - dones)
 
                 loss = nn.MSELoss()(q_values, targets)
                 optimizer.zero_grad()
                 loss.backward()
+                
+                # Gradient clipping for stability
+                torch.nn.utils.clip_grad_norm_(online_net.parameters(), max_norm=1.0)
                 optimizer.step()
 
                 # Update target network
@@ -131,8 +155,9 @@ def main():
             avg_reward = np.mean(episode_rewards[-100:])
             print(f"Episode {episode} | Avg Reward (last 100): {avg_reward:.3f} | Epsilon: {epsilon:.3f}")
 
-    # Save the trained model
-    torch.save(online_net.state_dict(), MODEL_PATH)
+    # Save the trained model (move to CPU first for compatibility)
+    torch.save(online_net.cpu().state_dict(), MODEL_PATH)
+    online_net.to(device)  # Move back to device for testing
     print(f"Training complete. Model saved as {MODEL_PATH}")
 
     # Test the trained agent
@@ -147,7 +172,7 @@ def main():
         total_reward = 0
         steps = 0
         while not done:
-            action = select_action(state, online_net, 0.0, action_dim)  # Greedy
+            action = select_action(state, online_net, 0.0, action_dim, device)  # Greedy
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             state = next_state
@@ -177,6 +202,7 @@ def main():
         "TRAIN_START": TRAIN_START,
         "NUM_EPISODES": NUM_EPISODES,
         "MODEL_PATH": MODEL_PATH,
+        "DEVICE": str(device),
     }
     save_results_to_csv(
         train_rewards=episode_rewards,
