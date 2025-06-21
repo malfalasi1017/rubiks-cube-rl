@@ -28,9 +28,9 @@ def get_device():
 class DQNNetwork(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(DQNNetwork, self).__init__()
-        self.fc1 = nn.Linear(state_dim, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, action_dim)
+        self.fc1 = nn.Linear(state_dim, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.fc3 = nn.Linear(256, action_dim)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -67,15 +67,15 @@ def main():
     device = get_device()
     
     # Hyperparameters - REDUCE BATCH SIZE for better GPU utilization
-    SCRAMBLES = 4
-    MAX_STEPS = 4
-    BUFFER_SIZE = 500_000
-    BATCH_SIZE = 64 
+    SCRAMBLES = 7
+    MAX_STEPS = 7
+    BUFFER_SIZE = 100_000
+    BATCH_SIZE = 128
     GAMMA = 0.9995
     LR = 5e-4
     EPS_START = 1.0
     EPS_END = 0.05
-    EPS_DECAY = 0.99995
+    EPS_DECAY = 0.9999
     TARGET_UPDATE_FREQ = 1000
     TRAIN_START = 1000
     NUM_EPISODES = 30_000
