@@ -211,25 +211,25 @@ class MCTS_DDQN:
                 node.visits += 1
                 node.value_sum += value
 
-    # Generate improved policy from visit counts (MOVED INSIDE THE FUNCTION)
-    visit_counts = np.zeros(12)
-    q_values = {}
+        # Generate improved policy from visit counts (MOVED INSIDE THE FUNCTION)
+        visit_counts = np.zeros(12)
+        q_values = {}
 
-    for action in range(12):
-        if action in root.children:
-            visit_counts[action] = root.children[action].visits
-            q_values[action] = root.get_q_value(action)
+        for action in range(12):
+            if action in root.children:
+                visit_counts[action] = root.children[action].visits
+                q_values[action] = root.get_q_value(action)
+            else:
+                visit_counts[action] = 0
+                q_values[action] = 0.0
+
+        # Convert visit counts to policy
+        if visit_counts.sum() == 0:
+            policy = np.ones(12) / 12
         else:
-            visit_counts[action] = 0
-            q_values[action] = 0.0
+            policy = visit_counts / visit_counts.sum()
 
-    # Convert visit counts to policy
-    if visit_counts.sum() == 0:
-        policy = np.ones(12) / 12
-    else:
-        policy = visit_counts / visit_counts.sum()
-
-    return policy, q_values
+        return policy, q_values
 
 class ReplayBuffer:
     """Replay buffer for MCTS-DDQN training."""

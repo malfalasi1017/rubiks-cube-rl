@@ -67,8 +67,8 @@ def main():
     device = get_device()
     
     # Hyperparameters - REDUCE BATCH SIZE for better GPU utilization
-    SCRAMBLES = 7
-    MAX_STEPS = 7
+    SCRAMBLES = 20
+    MAX_STEPS = 40
     BUFFER_SIZE = 100_000
     BATCH_SIZE = 128
     GAMMA = 0.9995
@@ -78,7 +78,7 @@ def main():
     EPS_DECAY = 0.9999
     TARGET_UPDATE_FREQ = 1000
     TRAIN_START = 1000
-    NUM_EPISODES = 30_000
+    NUM_EPISODES = 50_000
     MODEL_PATH = "./models/dqn_cube.pth"
     RESULTS_PATH = "./results/dqn_results.csv"
 

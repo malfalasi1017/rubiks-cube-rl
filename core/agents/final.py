@@ -22,7 +22,23 @@ def get_device():
         return torch.device("cpu")
 
 class DQNNetwork(nn.Module):
-    pass
+    def __init__(self, state_dim, action_dim, hidden_dim=512):
+        super(DQNNetwork, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1),\
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def forward(self, state):
+        return self.network(state)
 
 class MCTSNode:
     pass
@@ -47,6 +63,49 @@ class ReplayBuffer:
         return len(self.buffer)
 
 def main():
-    pass
+    device = get_device()
+
+    # Hyperparameters
+    LEARNING_RATE = 0.0001
+    BATCH_SIZE = 64
+    BUFFER_SIZE = 50000
+    GAMMA = 0.99
+    C_PUCT = 1.0
+    TEMPERATURE_PRIOR = 1.0
+    TARGET_UPDATE_FREQ = 1000
+
+    # Training Parameters
+    TRAINING_ITERATIONS = 100
+    EPISODES_PER_ITERATION = 10
+    TRAIN_STEPS_PER_ITERATION = 50
+
+    # Curriculum Learning
+    INITIAL_SCRAMBLES = 1
+    MAX_SCRAMBLES = 20
+
+    MODEL_PATH = "./models/mcts_ddqn_final_modal.pth"
+
+    # Initialze Environment and networks
+    env = RubiksCubeEnv(scrambles=INITIAL_SCRAMBLES, max_steps=50)
+    online_net = DQNNetwork().to(device)
+    target_net = DQNNetwork().to(device)
+    target_net.load_state_dict(online_net.state_dict())
+
+    optimizer = optim.Adam(online_net.parameters(), lr=LEARNING_RATE)
+    replay_buffer = ReplayBuffer(BUFFER_SIZE)
+
+    episode_rewards = []
+    episode_steps = []
+    solved_episodes = 0
+    total_episodes = 0
+
+    for iteration in range(TRAINING_ITERATIONS):
+        print(f"\n--- Training Iteration {iteration + 1}/{TRAINING_ITERATIONS} ---")
+
+        # Curriculum learning: incresase scrambles
+
+    torch.save(online_net.state_dict(), MODEL_PATH)
+    print(f"Final model saved to {MODEL_PATH}")
+
 
 
